@@ -3,7 +3,7 @@ import { ChatHistoryMessage, ChatProductMatch, getChatHistory, imageFileUrl, Pag
 import { ProductCard as ProductCardComponent } from './ProductCard'
 
 type ChatMessage = { id: number; role: 'assistant' | 'user'; content: string; products?: ChatProductMatch[] }
-type ChatWidgetProps = { userId: number | null; pageContext: PageContext | null; onNavigate: (path: string) => void }
+type ChatWidgetProps = { userId: number | null; pageContext: PageContext | null; onNavigate: (path: string) => void; onProductMatches: (products: ChatProductMatch[]) => void }
 const greeting: ChatMessage = { id: 1, role: 'assistant', content: 'Hi! I can help you find your next Yale favorite. Ask me about products, colors, or sizes.' }
 
 function matchAsProduct(match: ChatProductMatch): Product {
@@ -24,7 +24,7 @@ function historyAsMessage(message: ChatHistoryMessage, index: number): ChatMessa
   return { id: index + 1, role: message.role, content: message.content, products: message.products }
 }
 
-export function ChatWidget({ onNavigate, pageContext, userId }: ChatWidgetProps) {
+export function ChatWidget({ onNavigate, onProductMatches, pageContext, userId }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [draft, setDraft] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -35,6 +35,7 @@ export function ChatWidget({ onNavigate, pageContext, userId }: ChatWidgetProps)
     let active = true
     if (userId === null) {
       setMessages([greeting])
+      onProductMatches([])
       setIsLoadingHistory(false)
       return () => { active = false }
     }
@@ -44,6 +45,8 @@ export function ChatWidget({ onNavigate, pageContext, userId }: ChatWidgetProps)
       .then((response) => {
         if (!active) return
         setMessages(response.messages.length > 0 ? response.messages.map(historyAsMessage) : [greeting])
+        const lastProductMatches = [...response.messages].reverse().find((message) => message.role === 'assistant' && message.products.length > 0)?.products ?? []
+        onProductMatches(lastProductMatches)
       })
       .catch(() => {
         if (active) setMessages([greeting])
@@ -52,7 +55,7 @@ export function ChatWidget({ onNavigate, pageContext, userId }: ChatWidgetProps)
         if (active) setIsLoadingHistory(false)
       })
     return () => { active = false }
-  }, [userId])
+  }, [onProductMatches, userId])
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -63,7 +66,7 @@ export function ChatWidget({ onNavigate, pageContext, userId }: ChatWidgetProps)
     setDraft('')
     setIsSending(true)
     sendChatMessage(content, userId, pageContext)
-    .then((response) => setMessages((current) => [...current, { id: userMessageId + 1, role: 'assistant', content: response.message, products: response.products }]))
+    .then((response) => { setMessages((current) => [...current, { id: userMessageId + 1, role: 'assistant', content: response.message, products: response.products }]); onProductMatches(response.products) })
       .catch((error) => setMessages((current) => [...current, { id: userMessageId + 1, role: 'assistant', content: error instanceof Error ? error.message : 'The shopping assistant is temporarily unavailable.' }]))
       .finally(() => setIsSending(false))
   }
