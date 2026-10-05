@@ -1,0 +1,3 @@
+fastapi
+uvicorn[standard]
+pydantic-ai==0.8.1

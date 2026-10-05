@@ -1,0 +1,43 @@
+# Secrets and local configuration
+.env
+
+# Local data pack
+/data/
+data/
+*.db
+*.sqlite
+*.sqlite3
+campus_customs.db
+**/campus_customs.db
+/data/products/
+data/products/
+products/
+**/products/*
+
+# Python caches and environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# Frontend dependencies and builds
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+node_modules/
+dist/
+build/
+.cache/
+
+# Generated output and local tooling files
+.DS_Store
+*.log
+coverage/
+.python-version
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
